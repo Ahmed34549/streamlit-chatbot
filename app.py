@@ -39,3 +39,22 @@ if user_input:
     # Append AI response
     st.session_state.chat_history.append(AIMessage(content=response))
     st.chat_message("assistant").markdown(response)
+    
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+result = llm.invoke("how is breast cancer classified?")
+print("AI:",result.content)  
+from langchain.document_loaders import TextLoader
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+
+loader = TextLoader('https://arxiv.org/pdf/2410.01755')
+data = loader.load()
+text_splitter = CharacterTextSplitter(chunk_size=100, chunk_overlap=0)
+docs = text_splitter.split_documents(data)
+embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
+vector_store = FAISS.from_documents(docs,embeddings)
+ret = RetrievalQA.from_chain_type(llm=llm, retriever=vector_store.as_retriever())
+result = ret.invoke("how is breast cancer classified?")['result']
+result
